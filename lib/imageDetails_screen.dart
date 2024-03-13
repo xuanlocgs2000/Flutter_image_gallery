@@ -13,6 +13,7 @@ class ImageDetailScreen extends StatefulWidget {
 class _ImageDetailScreenState extends State<ImageDetailScreen> {
   late String currentImagePath;
   int selectedImageIndex = 0;
+  final ScrollController _controller = ScrollController();
   @override
   void initState() {
     super.initState();
@@ -23,6 +24,11 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
     setState(() {
       currentImagePath = newPath;
       selectedImageIndex = index;
+      _controller.animateTo(
+        index * (100), // Vị trí của ảnh được chọn
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -68,7 +74,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
             padding: EdgeInsets.symmetric(horizontal: 30),
             margin: EdgeInsets.symmetric(horizontal: 20),
             width: 400,
-            height: 650,
+            height: 600,
             decoration: BoxDecoration(
               image: DecorationImage(
                 image: AssetImage(currentImagePath),
@@ -106,6 +112,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
             height: 100,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              controller: _controller,
               itemCount: widget.imagePaths.length,
               itemBuilder: (context, index) {
                 return Padding(
@@ -120,8 +127,12 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                         borderRadius: BorderRadius.circular(8.0),
                         child: Image.asset(
                           widget.imagePaths[index],
-                          width: 100,
-                          height: 80,
+                          width: selectedImageIndex == index
+                              ? 130
+                              : 100, // Sử dụng kích thước mới khi ảnh được chọn
+                          height: selectedImageIndex == index
+                              ? 110
+                              : 80, // Sử dụng kích thước mới khi ảnh được chọn
                           fit: BoxFit.cover,
                         ),
                       ),
