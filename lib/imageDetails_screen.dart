@@ -129,10 +129,8 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                           widget.imagePaths[index],
                           width: selectedImageIndex == index
                               ? 130
-                              : 100, // Sử dụng kích thước mới khi ảnh được chọn
-                          height: selectedImageIndex == index
-                              ? 110
-                              : 80, // Sử dụng kích thước mới khi ảnh được chọn
+                              : 100, // zoom select
+                          height: selectedImageIndex == index ? 110 : 80,
                           fit: BoxFit.cover,
                         ),
                       ),

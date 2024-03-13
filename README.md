@@ -1,6 +1,7 @@
 # flutter_image_galerry
 
-A new Flutter project.
+<img src="./assets/src1" alt="Logo" width="120" height="240">
+<img src="./assets/src2" alt="Logo" width="120" height="240">
 
 ## Getting Started
 
