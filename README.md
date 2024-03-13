@@ -1,7 +1,7 @@
 # flutter_image_galerry
 
-<img src="assets/scr1.png" alt="screen " width="120" height="240">
-<img src="assets/scr2.png" alt="detail image" width="120" height="240">
+<img src="assets/scr1.png" alt="screen " width="240" height="500">
+<img src="assets/scr2.png" alt="detail image"  width="240" height="500">
 
 ## Getting Started
 
