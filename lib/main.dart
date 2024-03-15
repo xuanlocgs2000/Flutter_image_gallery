@@ -3,6 +3,7 @@ import 'imageDetails_screen.dart'; //
 import 'package:cached_network_image/cached_network_image.dart';
 
 void main() {
+  addImagePathMultipleTimes("https://i.ibb.co/vz6x9zK/VOZ-CNKT.png", 1000);
   runApp(MyApp());
 }
 
@@ -15,8 +16,12 @@ final List<String> imagePaths = [
   // "siduias",
   '',
   "https://i.ibb.co/vz6x9zK/VOZ-CNKT.png",
-  "https://i.ibb.co/vz6x9zK/VOZ-CNKT.png",
 ];
+void addImagePathMultipleTimes(String path, int times) {
+  for (int i = 0; i < times; i++) {
+    imagePaths.add(path);
+  }
+}
 
 final List<String> errorImagePaths = [];
 
