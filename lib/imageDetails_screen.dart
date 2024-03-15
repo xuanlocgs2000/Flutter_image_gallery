@@ -141,7 +141,9 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
             margin: EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: NetworkImage(currentImagePath),
+                image: CachedNetworkImageProvider(
+                  currentImagePath,
+                ),
                 fit: BoxFit.cover,
               ),
               borderRadius: BorderRadius.circular(15),
@@ -149,7 +151,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (!_isPinching)
+                if (!_isPinching) //\
                   IconButton(
                     icon: Icon(
                       Icons.arrow_back_ios,
@@ -159,7 +161,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                     onPressed: previousImage,
                   ),
                 Spacer(),
-                if (!_isPinching)
+                if (!_isPinching) // Ẩn/hiện nút khi không pinch
                   IconButton(
                     icon: Icon(
                       Icons.arrow_forward_ios,

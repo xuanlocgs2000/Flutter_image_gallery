@@ -14,7 +14,10 @@ final List<String> imagePaths = [
   "https://images.pexels.com/photos/842711/pexels-photo-842711.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
   // "https://images.pexels.com/ph1",
   // "siduias",
-  '',
+  'https://s.net.vn/VSMa',
+  'https://s.net.vn/JRlL',
+  'https://s.net.vn/rdZj',
+  'https://s.net.vn/lXgl',
   "https://i.ibb.co/vz6x9zK/VOZ-CNKT.png",
 ];
 void addImagePathMultipleTimes(String path, int times) {
@@ -74,6 +77,8 @@ class _ImageListScreenState extends State<ImageListScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: CachedNetworkImage(
+                  width: 200, // Thay đổi kích thước ảnh ở đây
+                  height: 300,
                   imageUrl: imagePaths[index],
                   progressIndicatorBuilder: (context, url, downloadProgress) =>
                       CircularProgressIndicator(
