@@ -16,9 +16,9 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
   late String currentImagePath;
   int selectedImageIndex = 0;
   final ScrollController _controller = ScrollController();
-  double _scale = 1.0;
-  double _previousScale = 5.0;
+
   bool _isPinching = false;
+  double _imageScale = 1.0;
   @override
   void initState() {
     super.initState();
@@ -89,21 +89,23 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
   }
 
   void _onScaleStart(ScaleStartDetails details) {
-    _previousScale = _scale;
     setState(() {
-      _isPinching = true; // start pinch
+      _isPinching = true;
+      _imageScale = 1.0;
     });
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) {
     setState(() {
-      _scale = _previousScale * details.scale;
+      // _isPinching = true;
+
+      _imageScale = details.scale;
     });
   }
 
   void _onScaleEnd(ScaleEndDetails details) {
     setState(() {
-      _isPinching = false; // end pinch
+      _isPinching = false;
     });
   }
 
@@ -124,55 +126,52 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
 
   Widget _buildImageViewer() {
     return Expanded(
-      child: Container(
-        child: InteractiveViewer(
-          constrained: true,
-          panEnabled: false,
-          boundaryMargin: EdgeInsets.all(200),
-          clipBehavior: Clip.hardEdge,
-          // use pinch to scale
-          onInteractionStart: (details) => _onScaleStart(details),
-          onInteractionUpdate: (details) => _onScaleUpdate(details),
-          onInteractionEnd: (details) => _onScaleEnd(details),
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height * 0.7,
-            padding: EdgeInsets.symmetric(horizontal: 30),
-            margin: EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: CachedNetworkImageProvider(
-                  currentImagePath,
+      child: GestureDetector(
+        onScaleStart: _onScaleStart,
+        onScaleUpdate: _onScaleUpdate,
+        child: Stack(
+          children: [
+            Container(
+              color: Colors.black,
+              child: Center(
+                child: Transform.scale(
+                  scale: _imageScale,
+                  child: CachedNetworkImage(
+                    imageUrl: currentImagePath,
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  ),
                 ),
-                fit: BoxFit.cover,
               ),
-              borderRadius: BorderRadius.circular(15),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (!_isPinching) //\
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios,
-                      color: Colors.grey,
-                      size: 50.0,
+            Align(
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (!_isPinching)
+                    IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.grey,
+                        size: 50.0,
+                      ),
+                      onPressed: previousImage,
                     ),
-                    onPressed: previousImage,
-                  ),
-                Spacer(),
-                if (!_isPinching) // Ẩn/hiện nút khi không pinch
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.grey,
-                      size: 50.0,
+                  // SizedBox(width: 250),
+                  if (!_isPinching)
+                    IconButton(
+                      icon: Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.grey,
+                        size: 50.0,
+                      ),
+                      onPressed: nextImage,
                     ),
-                    onPressed: nextImage,
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

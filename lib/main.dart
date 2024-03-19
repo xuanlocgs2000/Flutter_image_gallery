@@ -3,7 +3,7 @@ import 'imageDetails_screen.dart'; //
 import 'package:cached_network_image/cached_network_image.dart';
 
 void main() {
-  addImagePathMultipleTimes("https://i.ibb.co/vz6x9zK/VOZ-CNKT.png", 1000);
+  // addImagePathMultipleTimes("https://s.net.vn/lXgl", 1000);
   runApp(MyApp());
 }
 
@@ -77,36 +77,17 @@ class _ImageListScreenState extends State<ImageListScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: CachedNetworkImage(
-                  width: 200, // Thay đổi kích thước ảnh ở đây
+                  width: 200,
                   height: 300,
                   imageUrl: imagePaths[index],
                   progressIndicatorBuilder: (context, url, downloadProgress) =>
                       CircularProgressIndicator(
                           value: downloadProgress.progress),
-                  errorWidget: (context, url, error) => GestureDetector(
-                    // onTap: () {
-                    //   showDialog(
-                    //     context: context,
-                    //     builder: (context) => AlertDialog(
-                    //       title: Text('Error'),
-                    //       content: Text('Image not available.'),
-                    //       actions: [
-                    //         TextButton(
-                    //           onPressed: () {
-                    //             Navigator.of(context).pop();
-                    //           },
-                    //           child: Text('OK'),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   );
-                    // },
-                    child: Image.asset(
-                      "assets/image_error.png",
-                      width: 100,
-                      height: 200,
-                      fit: BoxFit.cover,
-                    ),
+                  errorWidget: (context, url, error) => Image.asset(
+                    "assets/image_error.png",
+                    width: 100,
+                    height: 200,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
