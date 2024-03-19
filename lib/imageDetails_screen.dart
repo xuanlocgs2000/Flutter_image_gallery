@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ImageDetailScreen extends StatefulWidget {
   final String imagePath;
