@@ -30,6 +30,7 @@ final List<String> imagePaths = [
   'https://s.net.vn/GPIr',
   'https://s.net.vn/Duh0',
   'https://s.net.vn/aIO4',
+  'https://images.unsplash.com/photo-1710631292664-481aa3b59000?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   // "https://i.ibb.co/vz6x9zK/VOZ-CNKT.png",
 ];
 void addImagePathMultipleTimes(String path, int times) {
@@ -94,9 +95,29 @@ class _ImageListScreenState extends State<ImageListScreen> {
     }
   }
 
+  void _showNoInternetDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Không có kết nối mạng"),
+          content: Text("Vui lòng kiểm tra kết nối mạng của bạn và thử lại."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Đóng"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
-    cacheManager.dispose(); // free cache khi widget bị hủy
+    cacheManager.dispose(); // free cache
     super.dispose();
   }
 
@@ -120,6 +141,8 @@ class _ImageListScreenState extends State<ImageListScreen> {
                         ImageDetailScreen(imagePaths[index], imagePaths, index),
                   ),
                 );
+              } else {
+                _showNoInternetDialog();
               }
             },
             child: Padding(

@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:photo_view/photo_view.dart';
 
 class ImageDetailScreen extends StatefulWidget {
   final String imagePath;
@@ -16,18 +17,67 @@ class ImageDetailScreen extends StatefulWidget {
 }
 
 class _ImageDetailScreenState extends State<ImageDetailScreen> {
+  DefaultCacheManager cacheManager = DefaultCacheManager();
+  bool isOnline = true;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    checkConnectionAndClearCache();
+  }
+
+  Future<void> checkConnectionAndClearCache() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult == ConnectivityResult.none) {
+      setState(() {
+        isOnline = false;
+      });
+      await cacheManager.emptyCache();
+    }
+  }
+
+  void _showNoInternetDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Không có kết nối mạng"),
+          content: Text("Vui lòng kiểm tra kết nối mạng của bạn và thử lại."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Đóng"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   late String currentImagePath;
   int selectedImageIndex = 0;
   final ScrollController _controller = ScrollController();
 
   bool _isPinching = false;
   double _imageScale = 1.0;
+
   @override
   void initState() {
     super.initState();
     currentImagePath = widget.imagePath;
     selectedImageIndex = widget.selectedIndex;
-
+    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+      if (result == ConnectivityResult.none) {
+        setState(() {
+          isOnline = false;
+        });
+      } else {
+        setState(() {
+          isOnline = true;
+        });
+      }
+    });
     WidgetsBinding.instance?.addPostFrameCallback((_) {
       //cuộn tới ảnh đang được xem
       double offset = selectedImageIndex * 116.0 -
@@ -58,6 +108,9 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
           curve: Curves.easeInOut,
         );
       }
+
+      // Thiết lập _imageScale về 1.0
+      _imageScale = 1.0;
     });
   }
 
@@ -98,10 +151,12 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
     });
   }
 
+  Offset _imageCenter = Offset(0, 0);
   void _onScaleUpdate(ScaleUpdateDetails details) {
     setState(() {
       // _isPinching = true;
 
+      _imageCenter = details.localFocalPoint;
       _imageScale = details.scale;
     });
   }
@@ -114,6 +169,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _imageScale = 1.0;
     return Scaffold(
       appBar: AppBar(
         title: Text('Image Detail'),
@@ -135,14 +191,28 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
         child: Stack(
           children: [
             Container(
-              color: Colors.black,
-              child: Center(
-                child: Transform.scale(
-                  scale: _imageScale,
-                  child: CachedNetworkImage(
-                    imageUrl: currentImagePath,
-                    placeholder: (context, url) => CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
+              color: const Color.fromARGB(255, 255, 255, 255),
+              child: InteractiveViewer(
+                // constrained: true,
+                // panEnabled: false,
+                // boundaryMargin: EdgeInsets.all(200),
+                child: Center(
+                  child: Transform.scale(
+                    scale: _imageScale,
+                    child: isOnline
+                        ? CachedNetworkImage(
+                            imageUrl: currentImagePath,
+                            placeholder: (context, url) =>
+                                CircularProgressIndicator(),
+                            errorWidget: (context, url, error) =>
+                                Icon(Icons.error),
+                          )
+                        : Image.asset(
+                            "assets/error_network.png",
+                            width: 400,
+                            height: 500,
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ),
               ),
@@ -152,25 +222,25 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (!_isPinching)
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.grey,
-                        size: 50.0,
-                      ),
-                      onPressed: previousImage,
+                  // if (!_isPinching)
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios,
+                      color: Colors.grey,
+                      size: 50.0,
                     ),
+                    onPressed: previousImage,
+                  ),
                   // SizedBox(width: 250),
-                  if (!_isPinching)
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.grey,
-                        size: 50.0,
-                      ),
-                      onPressed: nextImage,
+                  // if (!_isPinching)
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.grey,
+                      size: 50.0,
                     ),
+                    onPressed: nextImage,
+                  ),
                 ],
               ),
             ),
@@ -180,6 +250,17 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
     );
   }
 
+// Widget _buildImageViewer() {
+//     return Expanded(
+//       child: PhotoView(
+//         imageProvider: CachedNetworkImageProvider(currentImagePath),
+//         // : AssetImage("assets/error_network.png"),
+//         minScale: PhotoViewComputedScale.contained,
+//         maxScale: PhotoViewComputedScale.covered * 2.0,
+//         initialScale: PhotoViewComputedScale.contained,
+//       ),
+//     );
+//   }
   Widget _buildImageSelector() {
     return Align(
       alignment: Alignment.bottomCenter,
@@ -194,28 +275,39 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
               padding: EdgeInsets.all(8.0),
               child: GestureDetector(
                 onTap: () {
-                  updateImagePath(widget.imagePaths[index], index);
+                  if (isOnline) {
+                    updateImagePath(widget.imagePaths[index], index);
+                  } else {
+                    _showNoInternetDialog();
+                  }
                 },
                 child: Container(
                   decoration: getDecorationForImage(index, selectedImageIndex),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8.0),
-                    child: CachedNetworkImage(
-                      imageUrl: widget.imagePaths[index],
-                      width: selectedImageIndex == index ? 130 : 100,
-                      height: selectedImageIndex == index ? 110 : 80,
-                      fit: BoxFit.cover,
-                      progressIndicatorBuilder:
-                          (context, url, downloadProgress) =>
-                              CircularProgressIndicator(
-                                  value: downloadProgress.progress),
-                      errorWidget: (context, url, error) => Image.asset(
-                        'assets/image_error.png',
-                        width: 100,
-                        height: 200,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                    child: isOnline
+                        ? CachedNetworkImage(
+                            imageUrl: widget.imagePaths[index],
+                            width: selectedImageIndex == index ? 130 : 100,
+                            height: selectedImageIndex == index ? 110 : 80,
+                            fit: BoxFit.cover,
+                            progressIndicatorBuilder:
+                                (context, url, downloadProgress) =>
+                                    CircularProgressIndicator(
+                                        value: downloadProgress.progress),
+                            errorWidget: (context, url, error) => Image.asset(
+                              'assets/image_error.png',
+                              width: 100,
+                              height: 200,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Image.asset(
+                            "assets/error_network.png",
+                            width: 100,
+                            height: 200,
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ),
               ),
