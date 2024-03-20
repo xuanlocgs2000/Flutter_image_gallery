@@ -183,6 +183,46 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
     );
   }
 
+  Widget _buildImage() {
+    return isOnline
+        ? CachedNetworkImage(
+            imageUrl: currentImagePath,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => CircularProgressIndicator(),
+            errorWidget: (context, url, error) => Icon(Icons.error),
+          )
+        : Image.asset(
+            "assets/error_network.png",
+            width: 400,
+            height: 500,
+            fit: BoxFit.cover,
+          );
+  }
+
+  Widget _buildNavigationButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          icon: Icon(
+            Icons.arrow_left,
+            color: Colors.grey,
+            size: 50.0,
+          ),
+          onPressed: previousImage,
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.arrow_right,
+            color: Colors.grey,
+            size: 50.0,
+          ),
+          onPressed: nextImage,
+        ),
+      ],
+    );
+  }
+
   Widget _buildImageViewer() {
     return Expanded(
       child: GestureDetector(
@@ -193,58 +233,23 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
             Container(
               color: const Color.fromARGB(255, 255, 255, 255),
               child: InteractiveViewer(
-                child: Center(
-                  child: Transform.scale(
-                    scale: _imageScale,
-                    child: isOnline
-                        ? CachedNetworkImage(
-                            imageUrl: currentImagePath,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) =>
-                                CircularProgressIndicator(),
-                            errorWidget: (context, url, error) =>
-                                Icon(Icons.error),
-                          )
-                        : Image.asset(
-                            "assets/error_network.png",
-                            width: 400,
-                            height: 500,
-                            fit: BoxFit.cover,
-                          ),
-                  ),
-                ),
+                child: _buildTransformedImage(),
               ),
             ),
             Align(
               alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // if (!_isPinching)
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_left,
-                      color: Colors.grey,
-                      size: 50.0,
-                    ),
-                    onPressed: previousImage,
-                  ),
-                  // SizedBox(width: 250),
-                  // if (!_isPinching)
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_right,
-                      color: Colors.grey,
-                      size: 50.0,
-                    ),
-                    onPressed: nextImage,
-                  ),
-                ],
-              ),
+              child: _buildNavigationButtons(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTransformedImage() {
+    return Transform.scale(
+      scale: _imageScale,
+      child: Center(child: _buildImage()),
     );
   }
 
@@ -262,57 +267,71 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
   Widget _buildImageSelector() {
     return Align(
       alignment: Alignment.bottomCenter,
-      child: Container(
+      child: SizedBox(
         height: 100,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           controller: _controller,
           itemCount: widget.imagePaths.length,
           itemBuilder: (context, index) {
-            return Padding(
-              padding: EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  if (isOnline) {
-                    updateImagePath(widget.imagePaths[index], index);
-                  } else {
-                    _showNoInternetDialog();
-                  }
-                },
-                child: Container(
-                  decoration: getDecorationForImage(index, selectedImageIndex),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: isOnline
-                        ? CachedNetworkImage(
-                            imageUrl: widget.imagePaths[index],
-                            width: selectedImageIndex == index ? 130 : 100,
-                            height: selectedImageIndex == index ? 110 : 80,
-                            fit: BoxFit.cover,
-                            progressIndicatorBuilder:
-                                (context, url, downloadProgress) =>
-                                    CircularProgressIndicator(
-                                        value: downloadProgress.progress),
-                            errorWidget: (context, url, error) => Image.asset(
-                              'assets/image_error.png',
-                              width: 100,
-                              height: 200,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Image.asset(
-                            "assets/error_network.png",
-                            width: 100,
-                            height: 200,
-                            fit: BoxFit.cover,
-                          ),
-                  ),
-                ),
-              ),
-            );
+            return _buildImageItem(index);
           },
         ),
       ),
     );
+  }
+
+  Widget _buildImageItem(int index) {
+    return Padding(
+      padding: EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () {
+          if (isOnline) {
+            _handleImageSelection(widget.imagePaths[index], index);
+          } else {
+            _showNoInternetDialog();
+          }
+        },
+        child: Container(
+          decoration: getDecorationForImage(index, selectedImageIndex),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: isOnline
+                ? _buildCachedNetworkImage(index)
+                : _buildOfflineImage(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCachedNetworkImage(int index) {
+    return CachedNetworkImage(
+      imageUrl: widget.imagePaths[index],
+      width: selectedImageIndex == index ? 130 : 100,
+      height: selectedImageIndex == index ? 110 : 80,
+      fit: BoxFit.cover,
+      progressIndicatorBuilder: (context, url, downloadProgress) =>
+          CircularProgressIndicator(value: downloadProgress.progress),
+      errorWidget: (context, url, error) => Image.asset(
+        'assets/image_error.png',
+        width: 100,
+        height: 200,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  Widget _buildOfflineImage() {
+    return Image.asset(
+      "assets/error_network.png",
+      width: 100,
+      height: 200,
+      fit: BoxFit.cover,
+    );
+  }
+
+  void _handleImageSelection(String imagePath, int index) {
+    updateImagePath(imagePath, index);
   }
 }
