@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:iconsax/iconsax.dart';
 
 class ImageDetailScreen extends StatefulWidget {
   final String imagePath;
@@ -109,7 +110,6 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
         );
       }
 
-      // Thiết lập _imageScale về 1.0
       _imageScale = 1.0;
     });
   }
@@ -193,15 +193,13 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
             Container(
               color: const Color.fromARGB(255, 255, 255, 255),
               child: InteractiveViewer(
-                // constrained: true,
-                // panEnabled: false,
-                // boundaryMargin: EdgeInsets.all(200),
                 child: Center(
                   child: Transform.scale(
                     scale: _imageScale,
                     child: isOnline
                         ? CachedNetworkImage(
                             imageUrl: currentImagePath,
+                            fit: BoxFit.cover,
                             placeholder: (context, url) =>
                                 CircularProgressIndicator(),
                             errorWidget: (context, url, error) =>
@@ -225,7 +223,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                   // if (!_isPinching)
                   IconButton(
                     icon: Icon(
-                      Icons.arrow_back_ios,
+                      Icons.arrow_left,
                       color: Colors.grey,
                       size: 50.0,
                     ),
@@ -235,7 +233,7 @@ class _ImageDetailScreenState extends State<ImageDetailScreen> {
                   // if (!_isPinching)
                   IconButton(
                     icon: Icon(
-                      Icons.arrow_forward_ios,
+                      Icons.arrow_right,
                       color: Colors.grey,
                       size: 50.0,
                     ),
