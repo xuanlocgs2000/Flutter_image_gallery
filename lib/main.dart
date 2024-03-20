@@ -38,6 +38,8 @@ class ImageListScreen extends StatefulWidget {
 class _ImageListScreenState extends State<ImageListScreen> {
   DefaultCacheManager cacheManager = DefaultCacheManager();
   bool isOnline = true;
+  int loadedImagesCount = 0;
+  bool isLoadingMore = false;
 
   @override
   void initState() {
@@ -48,20 +50,33 @@ class _ImageListScreenState extends State<ImageListScreen> {
       });
     });
 
-    loadImagesSequentially(0);
+    _loadImagesSequentially(0);
   }
 
-  Future<void> loadImagesSequentially(int index) async {
+  Future<void> _loadImagesSequentially(int index) async {
     if (index < imagePaths.length) {
-      await Future.delayed(Duration(seconds: 3));
+      await Future.delayed(Duration(seconds: 1));
       setState(() {
         loadedImagesCount = index + 1;
       });
-      await loadImagesSequentially(index + 1);
+      await _loadImagesSequentially(index + 1);
     }
   }
 
-  int loadedImagesCount = 0;
+  Future<void> _loadMoreImages() async {
+    if (!isLoadingMore) {
+      setState(() {
+        isLoadingMore = true;
+      });
+
+      await Future.delayed(Duration(seconds: 1));
+
+      setState(() {
+        loadedImagesCount = loadedImagesCount + 18;
+        isLoadingMore = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,64 +84,99 @@ class _ImageListScreenState extends State<ImageListScreen> {
       appBar: AppBar(
         title: Text('Image List'),
       ),
-      body: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 8.0,
-          mainAxisSpacing: 8.0,
-        ),
-        itemCount: imagePaths.length,
-        itemBuilder: (context, index) {
-          bool imageLoaded = index < loadedImagesCount;
-          return GestureDetector(
-            onTap: () {
-              if (isOnline) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ImageDetailScreen(
-                      imagePaths[index],
-                      imagePaths,
-                      index,
-                    ),
-                  ),
-                );
-              } else {
-                _showNoInternetDialog();
-              }
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: isOnline || imageLoaded
-                  ? CachedNetworkImage(
-                      width: 200,
-                      height: 300,
-                      fit: BoxFit.cover,
-                      imageUrl: imagePaths[index],
-                      cacheManager: cacheManager,
-                      progressIndicatorBuilder:
-                          (context, url, downloadProgress) =>
-                              CircularProgressIndicator(
-                        value: downloadProgress.progress,
-                      ),
-                      errorWidget: (context, url, error) => Image.asset(
-                        "assets/image_error.png",
-                        width: 100,
-                        height: 200,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : Image.asset(
-                      "assets/error_network.png",
-                      width: 100,
-                      height: 200,
-                      fit: BoxFit.cover,
-                    ),
-            ),
-          );
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (ScrollNotification scrollInfo) {
+          if (!isLoadingMore &&
+              scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+            _loadMoreImages();
+            return true;
+          }
+          return false;
         },
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8.0,
+            mainAxisSpacing: 8.0,
+          ),
+          itemCount: _calculateItemCount(),
+          itemBuilder: (context, index) {
+            if (index == loadedImagesCount) {
+              // Render the "Load More" indicator
+              return _buildLoadMoreIndicator();
+            } else {
+              return _buildImageItem(index);
+            }
+          },
+        ),
       ),
     );
+  }
+
+  Widget _buildImageItem(int index) {
+    bool imageLoaded = index < loadedImagesCount;
+    return GestureDetector(
+      onTap: () {
+        if (isOnline) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ImageDetailScreen(
+                imagePaths[index],
+                imagePaths,
+                index,
+              ),
+            ),
+          );
+        } else {
+          _showNoInternetDialog();
+        }
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: isOnline || imageLoaded
+            ? CachedNetworkImage(
+                width: 200,
+                height: 300,
+                fit: BoxFit.cover,
+                imageUrl: imagePaths[index],
+                cacheManager: cacheManager,
+                progressIndicatorBuilder: (context, url, downloadProgress) =>
+                    CircularProgressIndicator(
+                  value: downloadProgress.progress,
+                ),
+                errorWidget: (context, url, error) => Image.asset(
+                  "assets/image_error.png",
+                  width: 100,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Image.asset(
+                "assets/error_network.png",
+                width: 100,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreIndicator() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  int _calculateItemCount() {
+    if (loadedImagesCount == imagePaths.length) {
+      return loadedImagesCount;
+    } else {
+      return loadedImagesCount + 1;
+    }
   }
 
   void _showNoInternetDialog() {
